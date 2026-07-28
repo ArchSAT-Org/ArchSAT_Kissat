@@ -3,7 +3,7 @@
 #include "inlineheap.h"
 #include "inlinequeue.h"
 #include "print.h"
-
+#include "inline.h"
 #include <inttypes.h>
 
 static unsigned last_enqueued_unassigned_variable (kissat *solver) {
@@ -227,7 +227,7 @@ void kissat_decide (kissat *solver) {
     lit = NOT (lit);
   kissat_push_frame (solver, lit);
   assert (solver->level < SIZE_STACK (solver->frames));
-  LOG ("decide literal %s", LOGLIT (lit));
+  printf ("LOG: decide literal %d\n", kissat_export_literal (solver, lit));
   kissat_assign_decision (solver, lit);
   STOP (decide);
 }
