@@ -2,6 +2,7 @@
 #include "allocate.h"
 #include "backtrack.h"
 #include "inline.h"
+#include "logfile.h"
 #include "print.h"
 #include "proprobe.h"
 #include "report.h"
@@ -514,6 +515,8 @@ static void substitute_clauses (kissat *solver, unsigned *repr) {
 
         assert (shrink == (new_size < old_size));
         if (new_size < old_size) {
+          ADD (literals_removed, old_size - new_size);
+          kissat_log_removed_literals (old_size - new_size);
           c->size = new_size;
           c->searched = 2;
           if (!c->shrunken) {

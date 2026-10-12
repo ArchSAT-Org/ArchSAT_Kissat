@@ -1,6 +1,7 @@
 #include "strengthen.h"
 #include "collect.h"
 #include "inline.h"
+#include "logfile.h"
 #include "promote.h"
 
 static clause *large_on_the_fly_strengthen (kissat *solver, clause *c,
@@ -37,6 +38,8 @@ static clause *large_on_the_fly_strengthen (kissat *solver, clause *c,
         kissat_mark_added_literal (solver, other);
     }
     assert (new_size > 2);
+    ADD (literals_removed, old_size - new_size);
+    kissat_log_removed_literals (old_size - new_size);
     c->size = new_size;
     c->searched = 2;
     if (c->redundant && c->glue >= new_size)

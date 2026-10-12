@@ -1,8 +1,18 @@
 #include "allocate.h"
 #include "collect.h"
 #include "inline.h"
+#include "logfile.h"
 
 #include <string.h>
+
+static void log_removed_clause (kissat *solver, clause *c) {
+  if (!kissat_logging_clauses ())
+    return;
+  kissat_begin_removed_clause ();
+  for (all_literals_in_clause (lit, c))
+    kissat_log_removed_clause_literal (kissat_export_literal (solver, lit));
+  kissat_end_removed_clause ();
+}
 
 static void inc_clause (kissat *solver, bool original, bool redundant,
                         bool binary) {
@@ -172,6 +182,7 @@ clause *kissat_delete_clause (kissat *solver, clause *c) {
   assert (c->garbage);
   size_t bytes = kissat_actual_bytes_of_clause (c);
   SUB (arena_garbage, bytes);
+  log_removed_clause (solver, c);
   INC (clauses_deleted);
   return (clause *) ((char *) c + bytes);
 }
@@ -183,5 +194,13 @@ void kissat_delete_binary (kissat *solver, unsigned a, unsigned b) {
   REMOVE_CHECKER_BINARY (a, b);
   DELETE_BINARY_FROM_PROOF (a, b);
   dec_clause (solver, false, true);
+  if (!kissat_logging_clauses ()) {
+    INC (clauses_deleted);
+    return;
+  }
+  kissat_begin_removed_clause ();
+  kissat_log_removed_clause_literal (kissat_export_literal (solver, a));
+  kissat_log_removed_clause_literal (kissat_export_literal (solver, b));
+  kissat_end_removed_clause ();
   INC (clauses_deleted);
 }

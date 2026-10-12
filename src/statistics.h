@@ -28,7 +28,7 @@
   COUNTER (chronological, 1, PCNT_CONFLICTS, "%", "conflicts") \
   COUNTER (clauses_added, 2, PCNT_CLS_ADDED, "%", "added") \
   COUNTER (clauses_binary, 2, PCNT_CLS_ADDED, "%", "added") \
-  STATISTIC (clauses_deleted, 1, PCNT_CLS_ADDED, "%", "added") \
+  COUNTER (clauses_deleted, 1, PCNT_CLS_ADDED, "%", "added") \
   STATISTIC (clauses_factored, 1, PCNT_CLS_ADDED, "%", "added") \
   STATISTIC (clauses_improved, 1, PCNT_CLS_LEARNED, "%", "learned") \
   COUNTER (clauses_irredundant, 2, PCNT_CLS_ADDED, "%", "added") \
@@ -155,6 +155,7 @@
   METRIC (literals_learned, 1, PER_CLS_LEARNED, 0, "per clause") \
   METRIC (literals_minimized, 1, PCNT_LITS_DEDUCED, "%", "deduced") \
   METRIC (literals_minshrunken, 1, PCNT_LITS_SHRUNKEN, "%", "shrunken") \
+  COUNTER (literals_removed, 1, NO_SECONDARY, 0, 0) \
   METRIC (literals_shrunken, 1, PCNT_LITS_DEDUCED, "%", "deduced") \
   STATISTIC (literals_unfactored, 2, PER_CLS_UNFACTORED, 0, "per unfactored") \
   METRIC (moved, 1, PCNT_REDUCTIONS, "%", "reductions") \

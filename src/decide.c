@@ -2,6 +2,7 @@
 #include "inlineframes.h"
 #include "inlineheap.h"
 #include "inlinequeue.h"
+#include "logfile.h"
 #include "print.h"
 #include "inline.h"
 #include <inttypes.h>
@@ -227,7 +228,11 @@ void kissat_decide (kissat *solver) {
     lit = NOT (lit);
   kissat_push_frame (solver, lit);
   assert (solver->level < SIZE_STACK (solver->frames));
-  printf ("LOG: decide literal %d\n", kissat_export_literal (solver, lit));
+  kissat_log_decision_level (solver->level);
+  if (kissat_logging_decisions ()) {
+    const int elit = kissat_export_literal (solver, lit);
+    kissat_log_decided_variable (ABS (elit), solver->level);
+  }
   kissat_assign_decision (solver, lit);
   STOP (decide);
 }

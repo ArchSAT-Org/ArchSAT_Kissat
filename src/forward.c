@@ -2,6 +2,7 @@
 #include "allocate.h"
 #include "eliminate.h"
 #include "inline.h"
+#include "logfile.h"
 #include "print.h"
 #include "rank.h"
 #include "report.h"
@@ -426,6 +427,8 @@ static bool forward_subsumed_clause (kissat *solver, clause *c,
           c->shrunken = true;
           lits[c->size - 1] = INVALID_LIT;
         }
+        ADD (literals_removed, c->size - new_size);
+        kissat_log_removed_literals (c->size - new_size);
         c->size = new_size;
         c->searched = 2;
         c->subsume = true;

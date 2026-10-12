@@ -4,6 +4,7 @@
 #include "import.h"
 #include "inline.h"
 #include "inlineframes.h"
+#include "logfile.h"
 #include "print.h"
 #include "propsearch.h"
 #include "require.h"
@@ -16,6 +17,16 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+static uint64_t tick_decisions;
+static uint64_t tick_conflicts;
+static uint64_t tick_propagations;
+static uint64_t tick_removed;
+static uint64_t tick_clauses;
+static uint64_t tick_literals;
+static double tick_total;
+static double tick_propagate;
+static double tick_simplify;
 
 void kissat_reset_last_learned (kissat *solver) {
   for (really_all_last_learned (p))
@@ -33,6 +44,11 @@ kissat *kissat_init (void) {
   kissat_init_profiles (&solver->profiles);
 #endif
   START (total);
+  solver->started = kissat_wall_clock_time ();
+  kissat_log_reset (solver->started);
+  tick_decisions = tick_conflicts = tick_propagations = 0;
+  tick_removed = tick_clauses = tick_literals = 0;
+  tick_total = tick_propagate = tick_simplify = 0;
   kissat_init_queue (solver);
   assert (INTERNAL_MAX_LIT < UINT_MAX);
   kissat_push_frame (solver, UINT_MAX);
@@ -472,12 +488,80 @@ void kissat_add (kissat *solver, int elit) {
   }
 }
 
+void kissat_log_tick (kissat *solver, bool force) {
+  const double now = kissat_wall_clock_time ();
+  if (!kissat_log_due (now, force))
+    return;
+  const uint64_t decisions = GET (decisions) + GET (warming_decisions);
+  const uint64_t conflicts = GET (conflicts);
+  const uint64_t propagations = GET (propagations);
+  const uint64_t removed =
+      GET (eliminated) + GET (substituted) + GET (units);
+  const uint64_t clauses = GET (clauses_deleted);
+  const uint64_t literals = GET (literals_removed);
+  // The final flush can fall inside a window that already closed empty.
+  if (force && decisions == tick_decisions && conflicts == tick_conflicts &&
+      propagations == tick_propagations && removed == tick_removed &&
+      clauses == tick_clauses && literals == tick_literals)
+    return;
+  // Share of this window's process time. Propagation during simplification
+  // is counted in both, matching the solver's own profile report.
+  double bcp = 0, inprocessing = 0;
+#ifndef QUIET
+  const double total = kissat_time (solver);
+  const double propagate = PROFILE (propagate).time;
+  const double simplify = PROFILE (simplify).time;
+  bcp = kissat_percent (propagate - tick_propagate, total - tick_total);
+  inprocessing = kissat_percent (simplify - tick_simplify, total - tick_total);
+  tick_total = total;
+  tick_propagate = propagate;
+  tick_simplify = simplify;
+#endif
+  kissat_log_window (now - solver->started, decisions - tick_decisions,
+                     conflicts - tick_conflicts,
+                     propagations - tick_propagations, removed - tick_removed,
+                     clauses - tick_clauses, literals - tick_literals, bcp,
+                     inprocessing);
+  tick_decisions = decisions;
+  tick_conflicts = conflicts;
+  tick_propagations = propagations;
+  tick_removed = removed;
+  tick_clauses = clauses;
+  tick_literals = literals;
+}
+
+static void log_summary (kissat *solver) {
+  // Closes the last, usually short, window so the lines partition the run.
+  kissat_log_tick (solver, true);
+#ifndef QUIET
+  // Flushes the profiles which are still running, 'total' in particular.
+  const double total = kissat_time (solver);
+  const double cpu = kissat_process_time ();
+  const double wall = kissat_wall_clock_time () - solver->started;
+  const double simplify = PROFILE (simplify).time;
+  const double propagate = PROFILE (propagate).time;
+  kissat_log_value ("Total run time", wall);
+  kissat_log_value ("CPU run time", cpu);
+  kissat_log_value ("CPU percentage", kissat_percent (cpu, wall));
+  kissat_log_value ("Solver time", PROFILE (search).time);
+  kissat_log_value ("Inproc time", simplify);
+  kissat_log_value ("Inproc percentage", kissat_percent (simplify, total));
+  // Needs '--profile=4', the level at which propagation is timed.
+  kissat_log_value ("BCP run time", propagate);
+  kissat_log_value ("BCP percentage", kissat_percent (propagate, total));
+#endif
+  kissat_log_count ("Removed clauses", GET (clauses_deleted));
+  kissat_log_count ("Removed literals", GET (literals_removed));
+}
+
 int kissat_solve (kissat *solver) {
   kissat_require_initialized (solver);
   kissat_require (EMPTY_STACK (solver->clause),
                   "incomplete clause (terminating zero not added)");
   kissat_require (!GET (searches), "incremental solving not supported");
-  return kissat_search (solver);
+  const int res = kissat_search (solver);
+  log_summary (solver);
+  return res;
 }
 
 void kissat_terminate (kissat *solver) {

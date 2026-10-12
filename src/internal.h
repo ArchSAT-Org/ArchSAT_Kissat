@@ -100,6 +100,10 @@ struct kissat {
 
   termination termination;
 
+  // Absolute wall-clock time at initialization, unlike the profiles which
+  // all measure process time.
+  double started;
+
   unsigned vars;
   unsigned size;
   unsigned active;

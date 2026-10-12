@@ -1,6 +1,7 @@
 #include "inline.h"
 #include "inlineheap.h"
 #include "inlinequeue.h"
+#include "logfile.h"
 
 static inline void activate_literal (kissat *solver, unsigned lit) {
   const unsigned idx = IDX (lit);
@@ -70,6 +71,8 @@ void kissat_mark_fixed_literal (kissat *solver, unsigned lit) {
   INC (units);
   int elit = kissat_export_literal (solver, lit);
   assert (elit);
+  const unsigned eidx = ABS (elit);
+  kissat_log_removed_variable (eidx);
   PUSH_STACK (solver->units, elit);
   LOG ("pushed external unit literal %d (internal %u)", elit, lit);
 }
@@ -88,6 +91,7 @@ void kissat_mark_eliminated_variable (kissat *solver, unsigned idx) {
   assert (elit);
   assert (elit != INT_MIN);
   unsigned eidx = ABS (elit);
+  kissat_log_removed_variable (eidx);
   import *import = &PEEK_STACK (solver->import, eidx);
   assert (!import->eliminated);
   assert (import->imported);

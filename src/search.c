@@ -17,6 +17,7 @@
 #include "reorder.h"
 #include "rephase.h"
 #include "report.h"
+#include "logfile.h"
 #include "restart.h"
 #include "terminate.h"
 #include "trail.h"
@@ -192,6 +193,7 @@ int kissat_search (kissat *solver) {
   if (!res && searching (solver)) {
     start_search (solver);
     while (!res) {
+      kissat_log_tick (solver, false);
       clause *conflict = kissat_search_propagate (solver);
       if (conflict)
         res = kissat_analyze (solver, conflict);

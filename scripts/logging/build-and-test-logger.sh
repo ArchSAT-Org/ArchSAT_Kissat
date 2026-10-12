@@ -1,0 +1,69 @@
+#!/bin/sh
+
+# Build the instrumented solver and run it on the benchmarks named below.
+# Add more names to run several, e.g. "ezunsat8 ezunsat9". Names given on the
+# command line are run as well. Use '-h' to see the other options.
+
+set -e
+
+cd "`dirname "$0"`/../.."
+
+# Add your path to benchmarks here
+BENCHMARKS=""
+
+# Which benchmarks to run. A name is looked up in BENCHMARKS above.
+INSTANCES="ezunsat8"
+
+# Flags to enable or disable logging of different events (1 is on, 0 is off)
+LOG_DECIDE=1
+# Also logs decision level
+LOG_DECIDE_LEVEL=1
+
+LOG_REMOVE_VARIABLE=1    
+LOG_REMOVE_CLAUSE=1      
+LOG_REMOVE_LITERALS=1    
+
+LOG_TOTAL_VARIABLES=1
+LOG_TOTAL_CLAUSES=1
+
+# timestamp-based logging
+LOG_TIME=0
+LOG_TIME_DECISIONS=1
+LOG_TIME_LEVEL=1
+LOG_TIME_CONFLICTS=1
+LOG_TIME_PROPAGATIONS=1
+LOG_TIME_REMOVED_VARIABLES=1
+LOG_TIME_REMOVED_CLAUSES=1
+LOG_TIME_REMOVED_LITERALS=1
+LOG_TIME_BCP=1
+LOG_TIME_INPROCESSING=1
+
+# summary logging
+LOG_SUMMARY=1
+LOG_TOTAL_RUN_TIME=1
+LOG_CPU_RUN_TIME=1
+LOG_CPU_PERCENTAGE=1
+LOG_SOLVER_TIME=1
+LOG_INPROC_TIME=1
+LOG_INPROC_PERCENTAGE=1
+LOG_BCP_RUN_TIME=1
+LOG_BCP_PERCENTAGE=1
+LOG_REMOVED_CLAUSES_TOTAL=1
+LOG_REMOVED_LITERALS_TOTAL=1
+
+export LOG_DECIDE LOG_DECIDE_LEVEL LOG_REMOVE_VARIABLE LOG_REMOVE_CLAUSE LOG_REMOVE_LITERALS \
+  LOG_TOTAL_VARIABLES LOG_TOTAL_CLAUSES \
+  LOG_TIME LOG_TIME_DECISIONS LOG_TIME_LEVEL LOG_TIME_CONFLICTS LOG_TIME_PROPAGATIONS \
+  LOG_TIME_REMOVED_VARIABLES LOG_TIME_REMOVED_CLAUSES LOG_TIME_REMOVED_LITERALS \
+  LOG_TIME_BCP LOG_TIME_INPROCESSING \
+  LOG_SUMMARY LOG_TOTAL_RUN_TIME LOG_CPU_RUN_TIME LOG_CPU_PERCENTAGE \
+  LOG_SOLVER_TIME LOG_INPROC_TIME LOG_INPROC_PERCENTAGE \
+  LOG_BCP_RUN_TIME LOG_BCP_PERCENTAGE \
+  LOG_REMOVED_CLAUSES_TOTAL LOG_REMOVED_LITERALS_TOTAL
+
+# './configure' generates 'build/makefile' and is only needed once.
+[ -f build/makefile ] || ./configure
+
+make -C build kissat
+
+exec python3 scripts/logging/run_logger_test.py "$BENCHMARKS" $INSTANCES "$@"

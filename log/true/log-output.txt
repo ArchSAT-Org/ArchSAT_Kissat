@@ -1,0 +1,12 @@
+Total variables 0
+Total clauses 0
+Total run time 0.002
+CPU run time 0.003
+CPU percentage 179.923
+Solver time 0.000
+Inproc time 0.000
+Inproc percentage 0.000
+BCP run time 0.000
+BCP percentage 0.000
+Removed clauses 0
+Removed literals 0

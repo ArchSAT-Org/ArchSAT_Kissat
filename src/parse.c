@@ -1,6 +1,7 @@
 #include "parse.h"
 #include "collect.h"
 #include "internal.h"
+#include "logfile.h"
 #include "print.h"
 #include "profile.h"
 #include "resize.h"
@@ -306,6 +307,7 @@ parse_dimacs (kissat * solver, file * file,
     return "expected new-line after parsing number of clauses";
   kissat_message (solver,
 		  "parsed 'p cnf %d %" PRIu64 "' header", variables, clauses);
+  kissat_log_problem_size ((unsigned) variables, clauses);
   *max_var_ptr = variables;
   kissat_reserve (solver, variables);
   uint64_t parsed = 0;

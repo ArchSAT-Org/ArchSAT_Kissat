@@ -2,6 +2,7 @@
 #include "dense.h"
 #include "inline.h"
 #include "kitten.h"
+#include "logfile.h"
 #include "logging.h"
 #include "print.h"
 #include "promote.h"
@@ -1001,6 +1002,8 @@ static void substitute_connected_clauses (sweeper *sweeper, unsigned lit,
         }
 
         if (new_size < old_size) {
+          ADD (literals_removed, old_size - new_size);
+          kissat_log_removed_literals (old_size - new_size);
           c->size = new_size;
           c->searched = 2;
           if (c->redundant && c->glue >= new_size)

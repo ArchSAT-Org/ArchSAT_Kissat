@@ -5,6 +5,7 @@
 #include "colors.h"
 #include "compact.h"
 #include "inline.h"
+#include "logfile.h"
 #include "print.h"
 #include "report.h"
 #include "sort.c"
@@ -350,6 +351,8 @@ static reference sparse_sweep_garbage_clauses (kissat *solver, bool compact,
 
     bool satisfied = false;
 
+    unsigned clause_flushed = 0;
+
     for (all_literals_in_clause (lit, src)) {
 #ifdef CHECKING_OR_PROVING
       if (checking_or_proving)
@@ -362,9 +365,10 @@ static reference sparse_sweep_garbage_clauses (kissat *solver, bool compact,
       const unsigned idx = IDX (lit);
       const unsigned level = tmp ? assigned[idx].level : INVALID_LEVEL;
 
-      if (tmp < 0 && !level)
+      if (tmp < 0 && !level) {
         flushed++;
-      else if (tmp > 0 && !level) {
+        clause_flushed++;
+      } else if (tmp > 0 && !level) {
         assert (!satisfied);
         assert (!dst->reason);
         LOG ("SRC satisfied by %s", LOGLIT (lit));
@@ -391,6 +395,11 @@ static reference sparse_sweep_garbage_clauses (kissat *solver, bool compact,
 #endif
       }
     }
+
+    // Logged here and not at the aggregated 'ADD' below to get one entry per
+    // clause, including the satisfied clauses which are dropped right away.
+    if (clause_flushed)
+      kissat_log_removed_literals (clause_flushed);
 
     if (satisfied) {
       if (dst->redundant)
@@ -541,6 +550,7 @@ static reference sparse_sweep_garbage_clauses (kissat *solver, bool compact,
                 "collected %s in total", FORMAT_BYTES (bytes));
 #endif
   ADD (flushed, flushed);
+  ADD (literals_removed, flushed);
 #ifdef METRICS
   ADD (allocated_collected, bytes);
 #endif

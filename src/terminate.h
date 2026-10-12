@@ -2,6 +2,7 @@
 #define _terminate_h_INCLUDED
 
 #include "internal.h"
+#include "logfile.h"
 
 #ifndef QUIET
 void kissat_report_termination (kissat *, const char *name,
@@ -12,6 +13,7 @@ void kissat_report_termination (kissat *, const char *name,
 static inline bool kissat_terminated (kissat *solver, int bit,
                                       const char *name, const char *file,
                                       long lineno, const char *fun) {
+  kissat_log_tick_sampled (solver);
   assert (0 <= bit), assert (bit < 64);
 #ifdef COVERAGE
   const uint64_t mask = (uint64_t) 1 << bit;

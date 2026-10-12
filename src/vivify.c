@@ -6,6 +6,7 @@
 #include "decide.h"
 #include "deduce.h"
 #include "inline.h"
+#include "logfile.h"
 #include "print.h"
 #include "promote.h"
 #include "proprobe.h"
@@ -109,6 +110,8 @@ static bool simplify_vivification_candidate (kissat *solver,
   assert (new_size == non_false);
   assert (new_size < old_size);
 
+  ADD (literals_removed, old_size - new_size);
+  kissat_log_removed_literals (old_size - new_size);
   c->size = new_size;
   c->searched = 2;
 
@@ -750,6 +753,8 @@ static void vivify_learn_large (kissat *solver, clause *c,
     c->shrunken = true;
     lits[old_size - 1] = INVALID_LIT;
   }
+  ADD (literals_removed, old_size - new_size);
+  kissat_log_removed_literals (old_size - new_size);
   c->size = new_size;
   if (!irredundant && c->glue >= new_size)
     kissat_promote_clause (solver, c, new_size - 1);
@@ -841,6 +846,8 @@ static void large_strengthen_after_instantiation (kissat *solver, clause *c,
     c->shrunken = true;
     lits[old_size - 1] = INVALID_LIT;
   }
+  ADD (literals_removed, old_size - new_size);
+  kissat_log_removed_literals (old_size - new_size);
   c->size = new_size;
   if (!irredundant && c->glue >= new_size)
     kissat_promote_clause (solver, c, new_size - 1);
